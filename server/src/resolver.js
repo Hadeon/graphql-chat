@@ -17,5 +17,15 @@ const resolvers = {
 
       return chat
     }
+  },
+
+  Subscription: {
+    messageSent: {
+      subscribe: (root, args, { pubsub }) => {
+        return pubsub.asyncIterator(CHAT_CHANNEL)
+      }
+    }
   }
 }
+
+module.exports = resolvers;
