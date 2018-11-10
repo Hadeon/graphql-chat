@@ -1,28 +1,105 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div id="app" class="container" style="padding-top: 100px">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-body">
+            <div class="row" v-if="entered">
+              <div class="col-md-12">
+                <div class="card">
+                  <div class="card-header">Chatbox</div>
+                  <div class="card-body">
+                    <dl
+                      v-for="(chat, id) in chats"
+                      :key="id"
+                    >
+                      <dt>{{ chat.from }}</dt>
+                      <dd>{{ chat.message }}</dd>
+                    </dl>
+                    <hr>
+
+                    <input
+                      type='text'
+                      class="form-control"
+                      placeholder="Type your message..."
+                      v-model="message"
+                      @keyup.enter="sendMessage"
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row" v-else>
+              <div class="col-md-12">
+                <form method="post" @submit.prevent="enterChat">
+                  <div class="form-group">
+                    <div class='input-group'>
+                      <input
+                        type='text'
+                        class="form-control"
+                        placeholder="Enter your username"
+                        v-model="username"
+                      >
+                      <div class='input-group-append'>
+                        <button class='btn btn-primary' @click="enterChat">Enter</button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import { 
+  CHATS_QUERY, 
+  SEND_MESSAGE_MUTATION,
+  MESSAGE_SENT_SUBSCRIPTION
+ } from '@/graphql';
 
 export default {
+  apollo: {
+  chats: {
+      query: CHATS_QUERY,
+      subscribeToMore: {
+        document: MESSAGE_SENT_SUBSCRIPTION,
+        updateQuery: (previousData, { subscriptionData }) => {
+          return {
+            chats: [...previousData.chats, subscriptionData.data.messageSent],
+          };
+        },
+      },
+    },
+  },
   name: 'app',
-  components: {
-    HelloWorld
-  }
-}
-</script>
+  data() {
+    return {
+      username: '',
+      message: '',
+      entered: false,
+    };
+  },
+  methods: {
+    async sendMessage() {
+      const message = this.message;
+      this.message = '';
 
-<style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
+      await this.$apollo.mutate({
+        mutation: SEND_MESSAGE_MUTATION,
+        variables: {
+          from: this.username,
+          message,
+        },
+      });
+    },
+    enterChat() {
+      this.entered = !!this.username != '';
+    },
+  },
+};
+</script>

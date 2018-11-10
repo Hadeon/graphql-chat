@@ -11,11 +11,11 @@ import App from './App.vue';
 Vue.config.productionTip = false;
 
 const httpLink = new HttpLink({
-  url: 'http://localhost:4000'
+  uri: 'http://localhost:4000'
 });
 
 const wsLink = new WebSocketLink({
-  url: 'ws://localhost:4000',
+  uri: 'ws://localhost:4000',
   options: {
     reconnect: true
   }
